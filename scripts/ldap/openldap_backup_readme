@@ -1,0 +1,71 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+Backup the Configuration Directory
+
+ - slapcat -n 0 -l config.ldif
+
+Backup the Data Directories
+
+ - slapcat -n 2 -l data.ldif
+
+Restore OpenLDAP
+
+ * Restore the Configuration Directory
+
+  - systemctl stop slapd
+
+  * Take backup of openldap configuration directory
+
+    - mv /etc/openldap/slapd.d /etc/openldap/slapd.d.`date '+%Y-%m-%d'`
+
+  * Create a openldap configuration directory
+
+    - mkdir /etc/openldap/slapd.d
+
+  * Restore the configuration directory with slapadd
+
+    - slapadd -n 0 -F /etc/openldap/slapd.d -l config.ldif
+
+  * change the ownership and permissions of the configuration directory to what it was previously.
+
+    - chown -R ldap:ldap /etc/openldap/slapd.d
+
+
+ * Restoring the Data Directories
+
+  * Take backup of openldap data directory
+
+    - mv /var/lib/ldap /var/lib/ldap`date '+%Y-%m-%d'`
+
+  * Create a openldap data directory
+
+    - mkdir /var/lib/ldap
+
+  * Restore the data directory with slapadd
+
+    - slapadd -n 2 -F /etc/openldap/slapd.d -l data.ldif
+
+  * change the ownership and permissions of the configuration directory to what it was previously.
+
+    - chown -R ldap:ldap /var/lib/ldap
+
+  * Now that you are done restoring, start slapd and check your directory.
+
+    - systemctl restart slapd

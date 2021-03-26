@@ -1,0 +1,50 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+For S3 load balancing we use haporxy and the load balancer nodes' HA is
+managed using LVS Virtual IP and keepalived.
+
+Typical setup with 2 haproxy nodes and exposed via a single VIP (Virtual IP).
+VIP assignment is managed with keepalived.
+
+Setup:
+- Assuming 2 nodes, haproxy1 and haproxy2
+
+- yum install haproxy keepalived
+
+- Based on OS version add the haproxy configs ie scripts/haproxy/haproxy_osver7.cfg or haproxy_osver8.cfg.
+  See <s3 src>/README.md
+
+- On node 1 (haproxy1) copy the keepalived.conf.main to /etc/keepalived/keepalived.conf
+
+- On node 2 (haproxy2) copy the keepalived.conf.backup to /etc/keepalived/keepalived.conf
+
+- Update the /etc/keepalived/keepalived.conf on each node to use the VIP in your setup.
+
+- start keepalived on both nodes (haproxy1 and haproxy2)
+  systemctl start keepalived
+
+- Check VIP assignment by using `ip a` command, primary node (haproxy1) should have VIP
+  activated and backup node (haproxy2) should not have VIP in `ip a` output.
+
+- Test VIP : haproxy_port reachability from a client node.
+
+For failover test, stop either haproxy service on node 1 (haproxy1) or simply
+stop haproxy1 node and verify that node 2(haproxy2) should now have the VIP enabled
+by running "ip a" command.

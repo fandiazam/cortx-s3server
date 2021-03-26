@@ -1,0 +1,111 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+---
+
+# Sets up the S3 development environment.
+# Prerequisites: common_build_env.yml and jenkins_yum_repos.yml
+
+
+- name: Install patched s3cmd deps on CentOS/RHEL 7
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '7')
+  yum:
+    name: python-magic
+    state: present
+
+- name: Install patched s3cmd deps on CentOS/RHEL 8
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '8')
+  yum:
+    name: python3-magic
+    state: present
+
+- name: Install patched s3cmd
+  yum:
+    name: s3cmd-1.6.1-1.el7.noarch
+    enablerepo: releases_cortx_s3deps
+    state: present
+
+- name: Install tools for ST
+  yum: pkg={{item}} state=installed
+  with_items:
+    - ossperf
+    - parallel
+    - bc
+    - coreutils
+
+- name: Install awscli on CentOS
+  when: ansible_distribution != "RedHat"
+  yum:
+    name: awscli
+    state: present
+
+- name: Install and configure awscli on RHEL
+  when: ansible_distribution == "RedHat"
+  command: "{{ item }}"
+  with_items:
+  - curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+  - unzip awscli-bundle.zip
+  - ./awscli-bundle/install -b ~/bin/aws
+  - rm -rf awscli*
+  no_log: true
+
+- name: Install scripttest for system testing
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '7')
+  yum: pkg={{item}} state=installed
+  with_items:
+    - "{{python_version}}-scripttest"
+
+- name: Configure lnet
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  template:
+    src: templates/lnet.conf
+    dest: /etc/modprobe.d/lnet.conf
+
+- name: Add the lnet module
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  modprobe:
+    name: lnet
+    state: present
+
+- name: Enable modprobe lnet on reboot
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  lineinfile:
+    path: /etc/modules-load.d/lnet.conf
+    line: 'lnet'
+    create: yes
+
+- name: Configure lnet
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  command: lctl net up
+
+- name: Enable lnet up on reboot
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  lineinfile:
+    path: /etc/profile
+    line: 'lctl net up'
+
+- name: Test lnet
+  # TODO - Once lustre mirror repo available for RHEL 8, remove below check
+  when: ansible_distribution != "RedHat"
+  command: lctl list_nids

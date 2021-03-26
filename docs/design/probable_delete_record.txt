@@ -1,0 +1,44 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+old_oid = OID of the old object that is being overwritten
+
+object_key_in_index = Object key in object list index (includes obj name)
+object_layout_id = Of current object to be possibly deleted
+
+object_list_index_oid = Object listing index OID
+objects_version_list_index_oid = Object Version listing OID for a bucket
+
+motr_process_fid = Process fid identifying S3 process that created this record
+
+global_instance_id = Lifecycle counter (uuid) when process started, changes on
+                     S3 service restart.
+
+force_delete = true => backgrounddelete should simply delete the current obj
+               identified by key for this record (key is present in delete
+               probable list)
+               false => make further checks as per algorithm for delete.
+
+part_list_idx_oid = present if record is part of multipart upload.
+
+version_key_in_index = Version key in version listing index,
+                       present if record is not part of multipart upload but is
+                       simple upload.
+
+create_timestamp = Timestamp when record was created, isoformat

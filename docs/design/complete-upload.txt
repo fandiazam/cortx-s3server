@@ -1,0 +1,44 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+- Fetch bucket metadata = bucket_metadata
+- Fetch multipart upload metadata = multipart_metadata
+- Validate multipart upload - the parts for part sizes and checksums.
+- If invalid, mark upload for abort is_abort_multipart = true else false
+- If is_abort_multipart true:
+    -- add to probable record, mark new object for deletion forceDelete=false
+  else false:
+    -- add to probable record mark old object for deletion forceDelete=false
+- if NOT is_abort_multipart
+  Save the new object metadata
+- delete multipart metadata
+- delete part list index
+- Send response to s3 client
+- If object metadata was updated to complete upload
+  -- if old object present, mark forceDelete=True for oldoid
+  -- delete old object oldoid
+  -- if delete oldoid object successful then remove oldoid probable entry
+     else oldoid probable entry stays in list so background delete can clean it.
+- else object metadata update failed
+  -- Remove oldoid probable record if old object existed
+- else multipart was aborted due to part/checksums validation errors
+  -- mark forceDelete=True for newoid
+  -- delete new object newoid
+  -- if delete newoid object successful then remove newoid probable entry
+     else newoid probable entry stays in list so background delete can clean it.
